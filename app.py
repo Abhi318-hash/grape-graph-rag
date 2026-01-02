@@ -9,7 +9,14 @@ from streamlit_agraph import agraph, Node, Edge, Config
 # --- PAGE CONFIGURATION ---
 st.set_page_config(page_title="Grape-Mind AI", page_icon="🍇", layout="wide")
 # Add this to Sidebar
-language = st.sidebar.selectbox("Select Language", ["English", "Hindi", "Marathi"])
+# --- Language Selector ---
+st.sidebar.header("🗣️ Language")
+selected_language = st.sidebar.selectbox(
+    "Choose Answer Language:",
+    ["English", "Hindi", "Marathi", "Kannada", "Telugu"]
+)
+st.sidebar.markdown("---")
+
 
 # --- LOAD SECRETS ---
 load_dotenv()
@@ -62,15 +69,22 @@ def hybrid_query(user_query):
     if vector_results['documents'] and vector_results['documents'][0]:
         text_context = vector_results['documents'][0][0]
 
-    # 4. Answer Generation
+   # 4. Answer Generation (Multi-Language Support)
     final_prompt = f"""
-    You are an expert Agronomist. Answer based on this data:
-    [FACTS]: {graph_context}
-    [MANUALS]: {text_context}
-
-     User Question: {user_query}
-
-       IMPORTANT: Output your answer in {language}.
+    You are an expert Agronomist. 
+    
+    INSTRUCTIONS:
+    1. Answer the user's question based on the [FACTS] and [MANUALS] provided below.
+    2. If the answer is not in the data, use your own expert knowledge (and mention it is "General Advice").
+    3. CRITICAL: Output your answer ONLY in {selected_language}.
+    
+    [STRICT DATABASE FACTS]
+    {graph_context}
+    
+    [MANUAL/PDF CONTEXT]
+    {text_context}
+    
+    User Question: {user_query}
     """
     return model.generate_content(final_prompt).text, graph_context, text_context
 
