@@ -1,0 +1,7 @@
+streamlit
+google-generativeai
+chromadb
+neo4j
+python-dotenv
+streamlit-agraph
+pypdf
