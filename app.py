@@ -22,11 +22,22 @@ st.sidebar.markdown("---")
 load_dotenv()
 
 # --- SETUP (Cached) ---
+
 @st.cache_resource
 def setup_connections():
-    # 1. Setup Gemini (Updated Model)
+    # 1. Setup Gemini with Safety Filters DISABLED (Important for Agri-Tech)
     genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
-    model = genai.GenerativeModel('gemini-2.5-flash') 
+    
+    # We allow "Dangerous Content" because we need to discuss Pesticides/Fungicides
+    safety_settings = [
+        {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_NONE"},
+        {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_NONE"},
+        {"category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_NONE"},
+        {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_NONE"},
+    ]
+    
+    # Use the stable model version
+    model = genai.GenerativeModel('gemini-2.5-flash', safety_settings=safety_settings)
 
     # 2. Setup Neo4j (Graph)
     NEO4J_URI = os.getenv("NEO4J_URI") 

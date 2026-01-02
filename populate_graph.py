@@ -1,14 +1,18 @@
+import os
 from neo4j import GraphDatabase
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # --- CONFIGURATION (Must match your Retriever) ---
 # 1. Paste your URI (Make sure it has +ssc)
+# CONFIG (Same as before)
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
+NEO4J_URI = os.getenv("NEO4J_URI")
+NEO4J_USERNAME = os.getenv("NEO4J_USERNAME") 
+NEO4J_PASSWORD = os.getenv("NEO4J_PASSWORD")
 
 
-# --- CONFIGURATION ---
-GOOGLE_API_KEY = "AIzaSyB9ft4PkcX90h5Sz_sa_a96WSaAr12cgQo"
-NEO4J_URI = "neo4j+ssc://a00a356a.databases.neo4j.io"
-NEO4J_USERNAME = "neo4j"
-NEO4J_PASSWORD = "32jUhBF4eQjhXV4x3RSTyemIIFbvicnRnuiDHR_JXQ0"
 
 
 # --- DATA INJECTION ---
