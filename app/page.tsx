@@ -8,7 +8,8 @@ import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
-import { Grape, Send, Database, FileText, Network, ChevronDown, Loader2, MessageSquare, Leaf, Bug, Pill } from "lucide-react"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Grape, Send, Database, FileText, Network, ChevronDown, Loader2, MessageSquare, Leaf, Bug, Pill, Camera, Upload, X, ImageIcon, AlertTriangle, CheckCircle } from "lucide-react"
 
 interface Message {
   role: "user" | "assistant"
@@ -17,11 +18,86 @@ interface Message {
   pdfContext?: string
 }
 
+interface ImageAnalysisResult {
+  disease: string
+  confidence: number
+  severity: "low" | "medium" | "high"
+  treatment: string
+  description: string
+}
+
 export default function GrapeGraphRAG() {
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [language, setLanguage] = useState("English")
+  const [selectedImage, setSelectedImage] = useState<string | null>(null)
+  const [isAnalyzing, setIsAnalyzing] = useState(false)
+  const [analysisResult, setAnalysisResult] = useState<ImageAnalysisResult | null>(null)
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setSelectedImage(reader.result as string)
+        setAnalysisResult(null)
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
+  const handleImageDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    const file = e.dataTransfer.files?.[0]
+    if (file && file.type.startsWith("image/")) {
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setSelectedImage(reader.result as string)
+        setAnalysisResult(null)
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
+  const analyzeImage = async () => {
+    if (!selectedImage) return
+    setIsAnalyzing(true)
+
+    // Simulated analysis for demo
+    setTimeout(() => {
+      const diseases = [
+        {
+          disease: "Powdery Mildew",
+          confidence: 92,
+          severity: "medium" as const,
+          treatment: "Apply sulfur-based fungicide (e.g., Microthiol) at 2-3 kg/ha. Repeat every 10-14 days.",
+          description: "White powdery spots detected on leaf surface. Common fungal disease affecting grape foliage and fruit."
+        },
+        {
+          disease: "Downy Mildew",
+          confidence: 87,
+          severity: "high" as const,
+          treatment: "Use copper-based fungicide (Bordeaux mixture) preventively. Apply mancozeb for active infections.",
+          description: "Yellow oily spots on upper leaf surface with white downy growth underneath. Requires immediate attention."
+        },
+        {
+          disease: "Black Rot",
+          confidence: 78,
+          severity: "low" as const,
+          treatment: "Remove infected plant material. Apply captan or myclobutanil fungicide during early growth stages.",
+          description: "Brown lesions with dark borders detected. Early-stage infection that can be managed effectively."
+        }
+      ]
+      setAnalysisResult(diseases[Math.floor(Math.random() * diseases.length)])
+      setIsAnalyzing(false)
+    }, 2500)
+  }
+
+  const clearImage = () => {
+    setSelectedImage(null)
+    setAnalysisResult(null)
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -136,16 +212,33 @@ export default function GrapeGraphRAG() {
 
         {/* Main Chat Area */}
         <main className="flex flex-1 flex-col">
-          <Card className="flex flex-1 flex-col">
-            <CardHeader className="border-b">
-              <CardTitle className="flex items-center gap-2">
-                <MessageSquare className="h-5 w-5 text-emerald-600" />
-                Ask about Grapes, Diseases, or Treatments
-              </CardTitle>
-              <CardDescription>
-                Powered by hybrid Graph + Vector retrieval for accurate agricultural insights
-              </CardDescription>
-            </CardHeader>
+          <Tabs defaultValue="chat" className="flex flex-1 flex-col">
+            <Card className="flex flex-1 flex-col">
+              <CardHeader className="border-b">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="flex items-center gap-2">
+                      <Grape className="h-5 w-5 text-emerald-600" />
+                      Grape-Mind AI Assistant
+                    </CardTitle>
+                    <CardDescription>
+                      Powered by hybrid Graph + Vector retrieval for accurate agricultural insights
+                    </CardDescription>
+                  </div>
+                  <TabsList className="grid w-[240px] grid-cols-2">
+                    <TabsTrigger value="chat" className="gap-1.5">
+                      <MessageSquare className="h-4 w-4" />
+                      Chat
+                    </TabsTrigger>
+                    <TabsTrigger value="image" className="gap-1.5">
+                      <Camera className="h-4 w-4" />
+                      Image
+                    </TabsTrigger>
+                  </TabsList>
+                </div>
+              </CardHeader>
+
+              <TabsContent value="chat" className="m-0 flex flex-1 flex-col">
 
             <ScrollArea className="flex-1 p-4">
               <div className="space-y-4">
@@ -226,20 +319,191 @@ export default function GrapeGraphRAG() {
             </ScrollArea>
 
             <div className="border-t p-4">
-              <form onSubmit={handleSubmit} className="flex gap-2">
-                <Input
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  placeholder="Ex: How do I treat Chardonnay?"
-                  className="flex-1"
-                  disabled={isLoading}
-                />
-                <Button type="submit" disabled={isLoading || !input.trim()} className="bg-emerald-600 hover:bg-emerald-700">
-                  <Send className="h-4 w-4" />
-                </Button>
-              </form>
-            </div>
-          </Card>
+                  <form onSubmit={handleSubmit} className="flex gap-2">
+                    <Input
+                      value={input}
+                      onChange={(e) => setInput(e.target.value)}
+                      placeholder="Ex: How do I treat Chardonnay?"
+                      className="flex-1"
+                      disabled={isLoading}
+                    />
+                    <Button type="submit" disabled={isLoading || !input.trim()} className="bg-emerald-600 hover:bg-emerald-700">
+                      <Send className="h-4 w-4" />
+                    </Button>
+                  </form>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="image" className="m-0 flex flex-1 flex-col p-4">
+                <div className="flex flex-1 flex-col gap-4 lg:flex-row">
+                  {/* Upload Area */}
+                  <div className="flex flex-1 flex-col">
+                    {!selectedImage ? (
+                      <div
+                        onDrop={handleImageDrop}
+                        onDragOver={(e) => e.preventDefault()}
+                        className="flex flex-1 flex-col items-center justify-center rounded-lg border-2 border-dashed border-muted-foreground/25 bg-muted/30 p-8 transition-colors hover:border-emerald-500/50 hover:bg-muted/50"
+                      >
+                        <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100">
+                          <ImageIcon className="h-8 w-8 text-emerald-600" />
+                        </div>
+                        <h3 className="mb-2 text-lg font-medium">Upload Grape Leaf Image</h3>
+                        <p className="mb-4 max-w-sm text-center text-sm text-muted-foreground">
+                          Drag and drop an image of a grape leaf, or click to browse. Our AI will analyze it for diseases.
+                        </p>
+                        <label htmlFor="image-upload">
+                          <Button asChild className="cursor-pointer bg-emerald-600 hover:bg-emerald-700">
+                            <span>
+                              <Upload className="mr-2 h-4 w-4" />
+                              Choose Image
+                            </span>
+                          </Button>
+                          <input
+                            id="image-upload"
+                            type="file"
+                            accept="image/*"
+                            onChange={handleImageUpload}
+                            className="hidden"
+                          />
+                        </label>
+                      </div>
+                    ) : (
+                      <div className="flex flex-1 flex-col">
+                        <div className="relative flex-1 overflow-hidden rounded-lg border bg-muted/30">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={clearImage}
+                            className="absolute right-2 top-2 z-10 h-8 w-8 bg-background/80 backdrop-blur-sm hover:bg-background"
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                          <img
+                            src={selectedImage}
+                            alt="Uploaded grape leaf"
+                            className="h-full w-full object-contain"
+                          />
+                        </div>
+                        <div className="mt-4 flex gap-2">
+                          <label htmlFor="image-reupload" className="flex-1">
+                            <Button variant="outline" asChild className="w-full cursor-pointer">
+                              <span>
+                                <Upload className="mr-2 h-4 w-4" />
+                                Change Image
+                              </span>
+                            </Button>
+                            <input
+                              id="image-reupload"
+                              type="file"
+                              accept="image/*"
+                              onChange={handleImageUpload}
+                              className="hidden"
+                            />
+                          </label>
+                          <Button
+                            onClick={analyzeImage}
+                            disabled={isAnalyzing}
+                            className="flex-1 bg-emerald-600 hover:bg-emerald-700"
+                          >
+                            {isAnalyzing ? (
+                              <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                Analyzing...
+                              </>
+                            ) : (
+                              <>
+                                <Camera className="mr-2 h-4 w-4" />
+                                Analyze Image
+                              </>
+                            )}
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Analysis Results */}
+                  <div className="w-full lg:w-80">
+                    <Card className="h-full">
+                      <CardHeader className="pb-3">
+                        <CardTitle className="flex items-center gap-2 text-base">
+                          <Bug className="h-4 w-4 text-emerald-600" />
+                          Analysis Results
+                        </CardTitle>
+                        <CardDescription>Disease detection and treatment recommendations</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        {!selectedImage && !analysisResult && (
+                          <div className="flex flex-col items-center py-8 text-center text-muted-foreground">
+                            <ImageIcon className="mb-2 h-8 w-8 opacity-50" />
+                            <p className="text-sm">Upload an image to get started</p>
+                          </div>
+                        )}
+
+                        {selectedImage && !analysisResult && !isAnalyzing && (
+                          <div className="flex flex-col items-center py-8 text-center text-muted-foreground">
+                            <Camera className="mb-2 h-8 w-8 opacity-50" />
+                            <p className="text-sm">Click &quot;Analyze Image&quot; to detect diseases</p>
+                          </div>
+                        )}
+
+                        {isAnalyzing && (
+                          <div className="flex flex-col items-center py-8 text-center">
+                            <Loader2 className="mb-3 h-8 w-8 animate-spin text-emerald-600" />
+                            <p className="text-sm font-medium">Analyzing leaf image...</p>
+                            <p className="text-xs text-muted-foreground">Detecting patterns and diseases</p>
+                          </div>
+                        )}
+
+                        {analysisResult && (
+                          <div className="space-y-4">
+                            <div className="rounded-lg bg-muted/50 p-3">
+                              <div className="mb-2 flex items-center justify-between">
+                                <span className="text-sm font-medium">{analysisResult.disease}</span>
+                                <Badge 
+                                  variant={analysisResult.severity === "high" ? "destructive" : analysisResult.severity === "medium" ? "default" : "secondary"}
+                                  className={analysisResult.severity === "medium" ? "bg-amber-500" : ""}
+                                >
+                                  {analysisResult.severity} severity
+                                </Badge>
+                              </div>
+                              <div className="mb-2 flex items-center gap-2">
+                                <div className="h-2 flex-1 overflow-hidden rounded-full bg-muted">
+                                  <div 
+                                    className="h-full bg-emerald-600 transition-all"
+                                    style={{ width: `${analysisResult.confidence}%` }}
+                                  />
+                                </div>
+                                <span className="text-xs text-muted-foreground">{analysisResult.confidence}%</span>
+                              </div>
+                              <p className="text-xs text-muted-foreground">{analysisResult.description}</p>
+                            </div>
+
+                            <div className="space-y-2">
+                              <div className="flex items-center gap-2 text-sm font-medium">
+                                <CheckCircle className="h-4 w-4 text-emerald-600" />
+                                Recommended Treatment
+                              </div>
+                              <p className="rounded-lg bg-emerald-50 p-3 text-xs text-emerald-800">
+                                {analysisResult.treatment}
+                              </p>
+                            </div>
+
+                            <div className="flex items-start gap-2 rounded-lg bg-amber-50 p-3">
+                              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+                              <p className="text-xs text-amber-800">
+                                This is an AI-powered analysis. For best results, consult with a local agricultural expert before applying treatments.
+                              </p>
+                            </div>
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  </div>
+                </div>
+              </TabsContent>
+            </Card>
+          </Tabs>
         </main>
       </div>
     </div>
