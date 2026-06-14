@@ -5,6 +5,7 @@ import os
 from neo4j import GraphDatabase
 from dotenv import load_dotenv
 from streamlit_agraph import agraph, Node, Edge, Config
+from PIL import Image
 
 # --- PAGE CONFIGURATION ---
 st.set_page_config(page_title="Grape-Mind AI", page_icon="🍇", layout="wide")
@@ -19,7 +20,7 @@ st.sidebar.markdown("---")
 
 
 # --- LOAD SECRETS ---
-load_dotenv()
+load_dotenv(override=True)
 
 # --- SETUP (Cached) ---
 
@@ -58,10 +59,17 @@ except Exception as e:
     st.stop()
 
 # --- LOGIC ---
-def hybrid_query(user_query):
+def hybrid_query(user_query, image=None):
     # 1. Extract Entity
-    response = model.generate_content(f"Extract only the main grape variety or disease name from: {user_query}. Respond with ONLY the name.")
-    entity = response.text.strip()
+    try:
+        if image:
+            response = model.generate_content([image, "Analyze this image of a grape leaf/plant. Extract only the main grape disease name or grape variety. Respond with ONLY the name."])
+        else:
+            response = model.generate_content(f"Extract only the main grape variety or disease name from: {user_query}. Respond with ONLY the name.")
+        entity = response.text.strip()
+    except ValueError as e:
+        print(f"Entity extraction returned empty text. {e}")
+        entity = "Unknown"
     
     # 2. Graph Search
     graph_context = "No specific graph data found."
@@ -75,7 +83,8 @@ def hybrid_query(user_query):
             graph_context = ", ".join(data)
 
     # 3. Vector Search (PDFs)
-    vector_results = collection.query(query_texts=[user_query], n_results=1)
+    search_query = user_query if user_query else f"What is the treatment and medicine amount for {entity}?"
+    vector_results = collection.query(query_texts=[search_query], n_results=1)
     text_context = "No relevant articles found."
     if vector_results['documents'] and vector_results['documents'][0]:
         text_context = vector_results['documents'][0][0]
@@ -85,7 +94,7 @@ def hybrid_query(user_query):
     You are an expert Agronomist. 
     
     INSTRUCTIONS:
-    1. Answer the user's question based on the [FACTS] and [MANUALS] provided below.
+    1. Answer the user's question based on the [FACTS] and [MANUALS] provided below. If an image is provided, identify the disease and use the facts to recommend the medicine and dosage.
     2. If the answer is not in the data, use your own expert knowledge (and mention it is "General Advice").
     3. CRITICAL: Output your answer ONLY in {selected_language}.
     
@@ -95,16 +104,35 @@ def hybrid_query(user_query):
     [MANUAL/PDF CONTEXT]
     {text_context}
     
-    User Question: {user_query}
+    User Question: {user_query if user_query else "Analyze the image and provide treatment."}
     """
-    return model.generate_content(final_prompt).text, graph_context, text_context
+    if image:
+        content_to_generate = [image, final_prompt]
+    else:
+        content_to_generate = final_prompt
+        
+    try:
+        final_response = model.generate_content(content_to_generate)
+        answer = final_response.text
+    except ValueError as e:
+        answer = "⚠️ I could not generate a response. The AI model returned an empty text block, possibly because the image could not be analyzed or was flagged. Please try another image or ask a text question."
+        
+    return answer, graph_context, text_context
 
 # --- UI LAYOUT ---
 st.title("🍇 Agri-Tech Graph RAG")
 st.markdown("Ask about **Grapes**, **Diseases**, or **Treatments**.")
 
+# Visual Diagnosis UI has been moved to a popover at the bottom and into the sidebar!
+
 
 # Sidebar: Graph Visualizer
+st.sidebar.markdown("---")
+st.sidebar.header("📸 Attach Image (Sidebar)")
+with st.sidebar.expander("Upload / Camera", expanded=False):
+    side_uploaded_file = st.file_uploader("Upload Leaf Image", type=["jpg", "jpeg", "png"], key="side_upload")
+    side_camera_image = st.camera_input("Take a Picture", key="side_cam")
+
 st.sidebar.markdown("---")
 st.sidebar.header("🕸️ Knowledge Graph")
 if st.sidebar.button("Visualize Graph"):
@@ -137,7 +165,7 @@ if st.sidebar.button("Visualize Graph"):
             
             edges.append(Edge(source=n.element_id, target=m.element_id, label=r.type))
 
-        config = Config(width=700, height=500, directed=True, nodeHighlightBehavior=True, highlightColor="#F7A7A6")
+        config = Config(width="100%", height=500, directed=True, nodeHighlightBehavior=True, highlightColor="#F7A7A6")
         st.write("### 🕸️ Live Database Structure")
         agraph(nodes=nodes, edges=edges, config=config)
 
@@ -149,14 +177,31 @@ for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-if prompt := st.chat_input("Ex: How do I treat Chardonnay?"):
-    st.chat_message("user").markdown(prompt)
-    st.session_state.messages.append({"role": "user", "content": prompt})
+popover = st.popover("➕ Attach Image")
+with popover:
+    st.markdown("**Attach an Image for Analysis**")
+    main_uploaded_file = st.file_uploader("Upload File", type=["jpg", "jpeg", "png"], key="main_upload")
+    main_camera_image = st.camera_input("Use Camera", key="main_cam")
+
+image_to_process = main_uploaded_file or main_camera_image or side_uploaded_file or side_camera_image
+
+analyze_button = False
+if image_to_process:
+    st.image(image_to_process, caption="Image Ready for Analysis", use_container_width=True)
+    analyze_button = st.button("🔍 Analyze Image", use_container_width=True)
+
+prompt = st.chat_input("Ex: How do I treat Chardonnay?")
+
+if prompt or analyze_button:
+    user_text = prompt if prompt else "Analyze this image."
+    st.chat_message("user").markdown(user_text)
+    st.session_state.messages.append({"role": "user", "content": user_text})
 
     with st.chat_message("assistant"):
         with st.spinner("Analyzing PDF Manuals & Graph Database..."):
             try:
-                answer, graph_debug, text_debug = hybrid_query(prompt)
+                img_obj = Image.open(image_to_process) if image_to_process else None
+                answer, graph_debug, text_debug = hybrid_query(prompt if prompt else "", img_obj)
                 st.markdown(answer)
                 with st.expander("See System Reasoning"):
                     st.info(f"**Graph Facts:** {graph_debug}")

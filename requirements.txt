@@ -5,3 +5,5 @@ neo4j
 python-dotenv
 streamlit-agraph
 pypdf
+Pillow
+wikipedia-api

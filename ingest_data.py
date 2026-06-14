@@ -12,24 +12,28 @@ genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
 client = chromadb.PersistentClient(path="./chroma_db")
 collection = client.get_or_create_collection("grape_docs")
 
-def ingest_pdfs(folder_path):
-    print(f"📂 Scanning folder: {folder_path}...")
+def ingest_files(folder_path):
+    print(f"Scanning folder: {folder_path}...")
     
     if not os.path.exists(folder_path):
-        print("❌ Error: 'data' folder not found. Please create it and add PDFs.")
+        print("Error: 'data' folder not found. Please create it and add files.")
         return
 
     count = 0
     for filename in os.listdir(folder_path):
-        if filename.endswith(".pdf"):
+        if filename.endswith(".pdf") or filename.endswith(".txt"):
             file_path = os.path.join(folder_path, filename)
             
-            # Extract Text from PDF
+            # Extract Text
             try:
-                reader = PdfReader(file_path)
                 text = ""
-                for page in reader.pages:
-                    text += page.extract_text() + "\n"
+                if filename.endswith(".pdf"):
+                    reader = PdfReader(file_path)
+                    for page in reader.pages:
+                        text += page.extract_text() + "\n"
+                elif filename.endswith(".txt"):
+                    with open(file_path, "r", encoding="utf-8") as f:
+                        text = f.read()
                 
                 # Basic chunking (splitting text into smaller pieces)
                 # Ideally, you split by paragraphs, but 1000 chars is good for a start
@@ -44,13 +48,13 @@ def ingest_pdfs(folder_path):
                         metadatas=[{"source": filename}]
                     )
                 
-                print(f"✅ Ingested: {filename} ({len(chunks)} chunks)")
+                print(f"Ingested: {filename} ({len(chunks)} chunks)")
                 count += 1
             except Exception as e:
-                print(f"⚠️ Failed to read {filename}: {e}")
+                print(f"Failed to read {filename}: {e}")
 
-    print(f"🎉 Success! Processed {count} PDF files.")
+    print(f"Success! Processed {count} files.")
 
 # Run the ingestion
 if __name__ == "__main__":
-    ingest_pdfs("./data")
+    ingest_files("./data")
