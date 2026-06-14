@@ -7,3 +7,6 @@ streamlit-agraph
 pypdf
 Pillow
 wikipedia-api
+langgraph
+langchain
+langchain-google-genai

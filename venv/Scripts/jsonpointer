@@ -1,5 +1,4 @@
-#!D:\venv\Scripts\python.exe
-# -*- coding: utf-8 -*-
+#!D:\agrichatbot\venv\Scripts\python.exe
 
 
 import argparse

@@ -6,6 +6,10 @@ from neo4j import GraphDatabase
 from dotenv import load_dotenv
 from streamlit_agraph import agraph, Node, Edge, Config
 from PIL import Image
+from agents.workflow import build_workflow
+
+# Compile LangGraph engine
+agentic_workflow = build_workflow()
 
 # --- PAGE CONFIGURATION ---
 st.set_page_config(page_title="Grape-Mind AI", page_icon="🍇", layout="wide")
@@ -59,65 +63,8 @@ except Exception as e:
     st.stop()
 
 # --- LOGIC ---
-def hybrid_query(user_query, image=None):
-    # 1. Extract Entity
-    try:
-        if image:
-            response = model.generate_content([image, "Analyze this image of a grape leaf/plant. Extract only the main grape disease name or grape variety. Respond with ONLY the name."])
-        else:
-            response = model.generate_content(f"Extract only the main grape variety or disease name from: {user_query}. Respond with ONLY the name.")
-        entity = response.text.strip()
-    except ValueError as e:
-        print(f"Entity extraction returned empty text. {e}")
-        entity = "Unknown"
-    
-    # 2. Graph Search
-    graph_context = "No specific graph data found."
-    with driver.session() as session:
-        result = session.run(
-            "MATCH (n {name: $name})-[:AFFECTS|TREATED_BY*1..2]-(related) RETURN DISTINCT related.name as info",
-            name=entity
-        )
-        data = [record["info"] for record in result]
-        if data:
-            graph_context = ", ".join(data)
-
-    # 3. Vector Search (PDFs)
-    search_query = user_query if user_query else f"What is the treatment and medicine amount for {entity}?"
-    vector_results = collection.query(query_texts=[search_query], n_results=1)
-    text_context = "No relevant articles found."
-    if vector_results['documents'] and vector_results['documents'][0]:
-        text_context = vector_results['documents'][0][0]
-
-   # 4. Answer Generation (Multi-Language Support)
-    final_prompt = f"""
-    You are an expert Agronomist. 
-    
-    INSTRUCTIONS:
-    1. Answer the user's question based on the [FACTS] and [MANUALS] provided below. If an image is provided, identify the disease and use the facts to recommend the medicine and dosage.
-    2. If the answer is not in the data, use your own expert knowledge (and mention it is "General Advice").
-    3. CRITICAL: Output your answer ONLY in {selected_language}.
-    
-    [STRICT DATABASE FACTS]
-    {graph_context}
-    
-    [MANUAL/PDF CONTEXT]
-    {text_context}
-    
-    User Question: {user_query if user_query else "Analyze the image and provide treatment."}
-    """
-    if image:
-        content_to_generate = [image, final_prompt]
-    else:
-        content_to_generate = final_prompt
-        
-    try:
-        final_response = model.generate_content(content_to_generate)
-        answer = final_response.text
-    except ValueError as e:
-        answer = "⚠️ I could not generate a response. The AI model returned an empty text block, possibly because the image could not be analyzed or was flagged. Please try another image or ask a text question."
-        
-    return answer, graph_context, text_context
+# The legacy hybrid_query has been completely replaced by the LangGraph multi-agent engine!
+# All logic is now handled in agents/workflow.py
 
 # --- UI LAYOUT ---
 st.title("🍇 Agri-Tech Graph RAG")
@@ -201,11 +148,29 @@ if prompt or analyze_button:
         with st.spinner("Analyzing PDF Manuals & Graph Database..."):
             try:
                 img_obj = Image.open(image_to_process) if image_to_process else None
-                answer, graph_debug, text_debug = hybrid_query(prompt if prompt else "", img_obj)
+                
+                # Run the LangGraph Agentic Workflow!
+                state_input = {
+                    "question": prompt if prompt else "",
+                    "image": img_obj,
+                    "language": selected_language,
+                    "model": model,
+                    "driver": driver,
+                    "collection": collection
+                }
+                
+                final_state = agentic_workflow.invoke(state_input)
+                
+                answer = final_state["final_answer"]
+                graph_debug = final_state["graph_context"]
+                text_debug = final_state["vector_context"]
+                entity_debug = final_state["extracted_entity"]
+                
                 st.markdown(answer)
                 with st.expander("See System Reasoning"):
-                    st.info(f"**Graph Facts:** {graph_debug}")
-                    st.warning(f"**PDF Context:** {text_debug}")
+                    st.info(f"**Extracted Entity:** {entity_debug}")
+                    st.info(f"**Graph Facts (Neo4j):** {graph_debug}")
+                    st.warning(f"**PDF Context (ChromaDB):** {text_debug}")
                 st.session_state.messages.append({"role": "assistant", "content": answer})
             except Exception as e:
                 st.error(f"Error: {e}")
