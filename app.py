@@ -83,39 +83,42 @@ with st.sidebar.expander("Upload / Camera", expanded=False):
 st.sidebar.markdown("---")
 st.sidebar.header("🕸️ Knowledge Graph")
 if st.sidebar.button("Visualize Graph"):
-    with driver.session() as session:
-        result = session.run("MATCH (n)-[r]->(m) RETURN n, r, m LIMIT 50")
-        nodes = []
-        edges = []
-        node_ids = set()
+    try:
+        with driver.session() as session:
+            result = session.run("MATCH (n)-[r]->(m) RETURN n, r, m LIMIT 50")
+            nodes = []
+            edges = []
+            node_ids = set()
         
-        for record in result:
-            n = record['n']
-            m = record['m']
-            r = record['r']
+            for record in result:
+                n = record['n']
+                m = record['m']
+                r = record['r']
             
-            # Helper to add nodes safely
-            def add_node(node_obj, img_url):
-                if node_obj.element_id not in node_ids:
-                    nodes.append(Node(
-                        id=node_obj.element_id, 
-                        label=node_obj.get("name"), 
-                        size=25, 
-                        shape="circularImage", 
-                        image=img_url
-                    ))
-                    node_ids.add(node_obj.element_id)
+                # Helper to add nodes safely
+                def add_node(node_obj, img_url):
+                    if node_obj.element_id not in node_ids:
+                        nodes.append(Node(
+                            id=node_obj.element_id, 
+                            label=node_obj.get("name"), 
+                            size=25, 
+                            shape="circularImage", 
+                            image=img_url
+                        ))
+                        node_ids.add(node_obj.element_id)
 
-            # Add nodes with icons
-            add_node(n, "https://cdn-icons-png.flaticon.com/512/763/763065.png")
-            add_node(m, "https://cdn-icons-png.flaticon.com/512/883/883407.png")
+                # Add nodes with icons
+                add_node(n, "https://cdn-icons-png.flaticon.com/512/763/763065.png")
+                add_node(m, "https://cdn-icons-png.flaticon.com/512/883/883407.png")
             
-            edges.append(Edge(source=n.element_id, target=m.element_id, label=r.type))
+                edges.append(Edge(source=n.element_id, target=m.element_id, label=r.type))
 
-        config = Config(width="100%", height=500, directed=True, nodeHighlightBehavior=True, highlightColor="#F7A7A6")
-        st.write("### 🕸️ Live Database Structure")
-        agraph(nodes=nodes, edges=edges, config=config)
+            config = Config(width="100%", height=500, directed=True, nodeHighlightBehavior=True, highlightColor="#F7A7A6")
+            st.write("### 🕸️ Live Database Structure")
+            agraph(nodes=nodes, edges=edges, config=config)
 
+    except Exception as e:
+        st.sidebar.error(f"⚠️ Knowledge Graph connection failed: {e}\n\nIf using Neo4j Aura, your database may be paused. Resume it in console.neo4j.io.")
 # Chat Interface
 if "messages" not in st.session_state:
     st.session_state.messages = []

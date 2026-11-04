@@ -40,4 +40,4 @@ def bulk_import(tx):
 with GraphDatabase.driver(NEO4J_URI, auth=AUTH) as driver:
     with driver.session() as session:
         session.execute_write(bulk_import)
-        print("✅ Expansion Complete! Your bot is now much smarter.")
+        print("Expansion Complete! Your bot is now much smarter.")

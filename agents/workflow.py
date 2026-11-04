@@ -17,7 +17,7 @@ class GraphState(TypedDict):
 
 def extractor_node(state: GraphState):
     """Agent: Extracts disease/variety entity from text/image"""
-    print("🤖 Agent 1 (Extractor) is running...")
+    print("[Agent 1] Extractor is running...")
     model = state["model"]
     image = state["image"]
     user_query = state["question"]
@@ -36,25 +36,29 @@ def extractor_node(state: GraphState):
 
 def diagnostician_node(state: GraphState):
     """Agent: Queries the Knowledge Graph for relationships"""
-    print("🤖 Agent 2 (Diagnostician) is querying Neo4j...")
+    print("[Agent 2] Diagnostician is querying Neo4j...")
     driver = state["driver"]
     entity = state["extracted_entity"]
     
     graph_context = "No specific graph data found."
-    with driver.session() as session:
-        result = session.run(
-            "MATCH (n {name: $name})-[:AFFECTS|TREATED_BY*1..2]-(related) RETURN DISTINCT related.name as info",
-            name=entity
-        )
-        data = [record["info"] for record in result]
-        if data:
-            graph_context = ", ".join(data)
+    try:
+        with driver.session() as session:
+            result = session.run(
+                "MATCH (n {name: $name})-[:AFFECTS|TREATED_BY*1..2]-(related) RETURN DISTINCT related.name as info",
+                name=entity
+            )
+            data = [record["info"] for record in result]
+            if data:
+                graph_context = ", ".join(data)
+    except Exception as e:
+        print(f"Diagnostician error (Neo4j unreachable): {e}")
+        graph_context = "Graph database is currently offline or unreachable."
             
     return {"graph_context": graph_context}
 
 def researcher_node(state: GraphState):
     """Agent: Queries Vector Database for detailed manuals"""
-    print("🤖 Agent 3 (Researcher) is querying ChromaDB...")
+    print("[Agent 3] Researcher is querying ChromaDB...")
     collection = state["collection"]
     user_query = state["question"]
     entity = state["extracted_entity"]
@@ -70,7 +74,7 @@ def researcher_node(state: GraphState):
 
 def supervisor_node(state: GraphState):
     """Agent: Synthesizes final answer in requested language"""
-    print("🤖 Agent 4 (Supervisor) is generating final response...")
+    print("[Agent 4] Supervisor is generating final response...")
     model = state["model"]
     image = state["image"]
     user_query = state["question"]
