@@ -42,7 +42,7 @@ def setup_connections():
     ]
     
     # Use the stable model version
-    model = genai.GenerativeModel('gemini-2.5-flash', safety_settings=safety_settings)
+    model = genai.GenerativeModel('gemini-3.8-flash', safety_settings=safety_settings)
 
     # 2. Setup Neo4j (Graph)
     NEO4J_URI = os.getenv("NEO4J_URI") 
