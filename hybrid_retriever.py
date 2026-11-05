@@ -18,7 +18,7 @@ NEO4J_PASSWORD = os.getenv("NEO4J_PASSWORD")
 
 # Setup Gemini
 genai.configure(api_key=GOOGLE_API_KEY)
-model = genai.GenerativeModel('gemini-2.5-flash')
+model = genai.GenerativeModel('gemini-3.8-flash')
 
 # Setup ChromaDB (Persistent storage on your D: drive)
 # This ensures your "Articles" stay saved after you close the script
