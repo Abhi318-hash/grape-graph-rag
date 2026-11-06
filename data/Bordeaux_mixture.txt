@@ -14,12 +14,11 @@ The conventional method of describing the mixture's composition is to give the w
 
 Risks
 Bordeaux mixture has been found to be harmful to fish, livestock and earthworms, due to potential buildup of copper in the soil.
-The chemical was in use as a blight preventive in the potato country of northern Maine by 1921. It started to be used by the United Fruit Company throughout Latin America around 1922. The mixture was nicknamed perico, or "parakeet", because it would turn workers completely blue. Many workers would get sick or die of copper poisoning.
+The chemical was in use as a blight preventive in the potato country of northern Maine by 1921. It started to be used by the United Fruit Company throughout Latin America around 1922. The mixture was nicknamed perico, or "parakeet", because it would turn workers completely blue. Many workers got sick or died of copper poisoning.
 
 History
 In the 19th century, several outbreaks of vine diseases occurred among the Vitis vinifera vines of the classical European wine regions.  These outbreaks were caused by pests to which these vines lacked resistance, carried on vines brought to Europe as botanical specimens of American origin.  These pests included not only the aphid Phylloxera vastatrix which caused the Great French Wine Blight, but also mildew and other diseases caused by fungi.
 After the downy mildew had struck, botany professor Pierre-Marie-Alexis Millardet of the University of Bordeaux studied the disease in vineyards of the Bordeaux region. Millardet then noted that vines closest to the roads did not show mildew, while all other vines were affected. After inquiries, he found out those vines had been sprayed with a mixture of CuSO4 and lime to deter passersby from eating the grapes, since this treatment was both visible and bitter-tasting. This led Millardet to conduct trials with this treatment. The trials primarily took place in the vineyards of Château Dauzac, where he was assisted by Ernest David, Dauzac's technical director. Millardet published his findings in 1885, and recommended the mixture to combat downy mildew.
-In France, the use of Bordeaux mixture has also been known as the Millardet-David treatment.
 
 See also
 Burgundy mixture

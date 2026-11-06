@@ -40,9 +40,9 @@ def ingest_files(folder_path):
                 chunk_size = 1000
                 chunks = [text[i:i+chunk_size] for i in range(0, len(text), chunk_size)]
                 
-                # Add chunks to Vector DB
+                # Add or update chunks in Vector DB (upsert prevents duplicate ID errors)
                 for i, chunk in enumerate(chunks):
-                    collection.add(
+                    collection.upsert(
                         documents=[chunk],
                         ids=[f"{filename}_chunk_{i}"],
                         metadatas=[{"source": filename}]

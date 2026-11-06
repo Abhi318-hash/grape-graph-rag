@@ -1,0 +1,29 @@
+Mancozeb is a dithiocarbamate non-systemic agricultural fungicide with multi-site, protective action on contact. It is a combination of two other dithiocarbamates: maneb and zineb. The mixture controls many fungal diseases in a wide range of field crops, fruits, nuts, vegetables, and ornamentals. It is marketed as Penncozeb, Trimanoc, Vondozeb, Dithane, Manzeb, Nemispot, and Manzane. In Canada, a mixture of zoxamide and mancozeb was registered for control of the mildew named Gavel as early as 2008.
+
+Mechanism
+Mancozeb reacts with, and inactivates, the sulfhydryl groups of amino acids and enzymes within fungal cells, resulting in disruption of lipid metabolism, respiration, and production of adenosine triphosphate.
+Mancozeb is listed under FRAC code M:03 The "M:" refers to Chemicals with Multi-Site Activity.  "M:" FRAC groups are defined as generally considered as a low risk group without any signs of resistance developing to the fungicides.
+
+History
+Mancozeb was approved in the United States in 1948 as a broad-spectrum fungicide for use in agriculture and horticulture.
+
+Synthesis and Preparation
+Mancozeb is produced by reacting maneb with zinc chloride. It consists of a mixture of manganese ethylenebisdithiocarbamate and zinc ethylenebisdithiocarbamate and can be represented by the molecular formula (C4H6MnN2S4)x·(C4H6N2S4Zn)y where x:y = 94:6
+
+Uses
+Mancozeb is used under various trade names (e.g., Dithane, Manzeb, etc.) as an active ingredient in plant protection products (fungicide) for a wide range of agricultural and horticultural crops, including various fruits, vegetables, nuts, and grains, as well as potatoes, grapes, corn, and cotton. It is also used in combination with the active ingredients Zineb and Maneb. Mancozeb acts only as a preventive contact fungicide.
+
+Approval Status
+EU approval expired on January 31, 2018. At the national level, mancozeb was approved in 27 EU member states and in Switzerland, and was included in numerous plant protection products. Due to confirmed health concerns, the European Commission decided on December 14, 2020, to revoke the EU authorization for mancozeb. Member states were required to withdraw the authorizations for all plant protection products containing mancozeb by June 2021.
+In Switzerland, the phase-out period was extended until May 31, 2022, because of pending legal proceedings.
+
+Toxicology
+The acceptable daily intake is 0.05, the acute reference dose is 0.6, and the acceptable operator exposure Level is 0.035 milligrams per kilogram of body weight per day. The European Food Safety Authority (EFSA) has raised concerns about the potential toxic and endocrine-disrupting effects of mancozeb on human and animal health, as well as its environmental impacts.
+A major toxicological concern is ethylenethiourea (ETU), an industrial contaminant and a breakdown product of mancozeb and other EBDC pesticides. It has potential to cause goiter, a condition in which the thyroid gland is enlarged and has produced birth defects and cancer in experimental animals. ETU has been classified as a probable human carcinogen by the EPA. Mancozeb has been shown to have significant negative effects on beneficial root fungi - totally preventing spore germination at levels far below recommended dosage levels.
+
+See also
+Fungicide use in the United States
+
+References
+External links
+Mancozeb in the Pesticide Properties DataBase (PPDB)

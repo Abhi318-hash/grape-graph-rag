@@ -95,9 +95,6 @@ PHI-base (Pathogen-Host-Interaction database)
 Plant pathology
 Plant disease forecasting
 
-Further reading
-Haverkate, F.; Tempel, A.; Held, A. J. (1969). "Interaction of 2,4,5-trichlorophenylsulphonylmethyl thiocyanate with fungal spores". Netherlands Journal of Plant Pathology. 75 (5): 308–315. Bibcode:1969EJPP...75..308H. doi:10.1007/BF02015493. S2CID 23304303.
-
 References
 External links
 Fungicide Resistance Action Committee

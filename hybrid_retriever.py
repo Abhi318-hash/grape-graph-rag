@@ -1,60 +1,57 @@
-import google.generativeai as genai
-import chromadb
 import os
-
-from neo4j import GraphDatabase
-
-# --- CONFIGURATION ---
-
 from dotenv import load_dotenv
+from neo4j import GraphDatabase
+import chromadb
+from gemini_manager import get_gemini_manager
 
 load_dotenv()
 
-# CONFIG (Same as before)
+# CONFIG
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 NEO4J_URI = os.getenv("NEO4J_URI")
 NEO4J_USERNAME = os.getenv("NEO4J_USERNAME") 
 NEO4J_PASSWORD = os.getenv("NEO4J_PASSWORD")
 
-# Setup Gemini
-genai.configure(api_key=GOOGLE_API_KEY)
-model = genai.GenerativeModel('gemini-3.8-flash')
+# Setup Gemini Model Manager (dynamic fallback)
+gemini_mgr = get_gemini_manager()
 
 # Setup ChromaDB (Persistent storage on your D: drive)
-# This ensures your "Articles" stay saved after you close the script
 client = chromadb.PersistentClient(path="./chroma_db")
 collection = client.get_or_create_collection("grape_docs")
 
-def hybrid_query(user_query):
-    # 1. Entity Extraction
-    response = model.generate_content(f"Extract only the main grape variety or disease name from: {user_query}. Respond with ONLY the name.")
+def hybrid_query(user_query: str):
+    # 1. Entity Extraction with automatic fallback
+    response, _, _ = gemini_mgr.generate_content_with_fallback(
+        f"Extract only the main grape variety or disease name from: {user_query}. Respond with ONLY the name."
+    )
     entity = response.text.strip()
     print(f"-> Searching for Entity: {entity}")
 
     # 2. Graph Retrieval (Structured Facts)
     graph_context = ""
-    # FIX: Use the variables defined at the top
     AUTH = (NEO4J_USERNAME, NEO4J_PASSWORD) 
     
-    with GraphDatabase.driver(NEO4J_URI, auth=AUTH) as driver:
-        with driver.session() as session:
-            result = session.run(
-                "MATCH (n {name: $name})-[:AFFECTS|TREATED_BY*1..2]-(related) RETURN DISTINCT related.name as info",
-                name=entity
-            )
-            graph_context = ", ".join([record["info"] for record in result])
+    if NEO4J_URI and NEO4J_USERNAME and NEO4J_PASSWORD:
+        try:
+            with GraphDatabase.driver(NEO4J_URI, auth=AUTH) as driver:
+                with driver.session() as session:
+                    result = session.run(
+                        "MATCH (n {name: $name})-[:AFFECTS|TREATED_BY*1..2]-(related) RETURN DISTINCT related.name as info",
+                        name=entity
+                    )
+                    graph_context = ", ".join([record["info"] for record in result])
+        except Exception as e:
+            print(f"Graph lookup notice: {e}")
 
     # 3. Vector Retrieval (Unstructured Text)
-    # n_results=2 means find the 2 best matching sentences from your articles
     vector_results = collection.query(query_texts=[user_query], n_results=2)
     
-    # Check if we actually found any articles
     if vector_results['documents'] and vector_results['documents'][0]:
         text_context = " ".join(vector_results['documents'][0])
     else:
         text_context = "No detailed articles found for this topic."
 
-    # 4. Final Generation (Combining everything)
+    # 4. Final Generation (Combining everything with automatic fallback)
     final_prompt = f"""
     Answer the user question using ONLY the following info.
     Graph Facts (from Database): {graph_context}
@@ -62,8 +59,11 @@ def hybrid_query(user_query):
     
     Question: {user_query}
     """
-    return model.generate_content(final_prompt).text
+    resp, used_model, _ = gemini_mgr.generate_content_with_fallback(final_prompt)
+    print(f"Generated using model: {used_model}")
+    return resp.text
 
 # --- RUN THE TEST ---
-print("\n--- FINAL ANSWER ---")
-print(hybrid_query("How do I treat diseases affecting Chardonnay?"))
+if __name__ == "__main__":
+    print("\n--- FINAL ANSWER ---")
+    print(hybrid_query("How do I treat diseases affecting Chardonnay?"))

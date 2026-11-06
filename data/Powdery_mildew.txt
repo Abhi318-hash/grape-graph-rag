@@ -11,8 +11,9 @@ The similarly-named but unrelated downy mildews (Peronosporaceae) can have a sim
 
 Ecology
 Erysiphaceae species are obligate biotrophs, meaning they infect living plants. Specialised haustoria are able to penetrate the plant cells while keeping them alive. Most powdery mildew species are highly host-specific, infecting at most a few genera and frequently just a single species. The few species that are still rather broadly defined are considered species complexes with a narrow sensu stricto host range. Despite this, they are capable of 'jumping' host to infect a new genus. It is thought the now-common species in Europe Erysiphe alphitoides did this to first infect oaks (Quercus), facilitating its spread to the continent. Since then, it has also been reported as occurring on plants such as Wisteria, demonstrating the host-jumping ability that has led to its success.
-
 Some Erysiphaceae species host the hyperparasite Ampelomyces quisqualis. This fungus reduces growth and may even kill the mildew, leading to its use as an active ingredient in some fungicides. Around 40 other fungal species have been known to parasitise powdery mildews: mainly ascomycetes such as Cladosporium but including basidiomycetes such as Tilletiopsis.
+
+Powdery mildew is the main food source of some ladybird species such as Psyllobora vigintiduopunctata.
 
 Distribution
 Erysiphaceae have a cosmopolitan distribution and are native to every continent other than Antarctica and Australia. The centre of biodiversity appears to be in East Asia, and many species have been introduced from here to other continents such as Europe and North America, often due to trade in plants for gardens. Some powdery mildew species can become invasive when introduced outside their native range.

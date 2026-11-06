@@ -40,6 +40,8 @@ This project has evolved beyond standard RAG into a highly advanced enterprise-g
 | **8** | **Graph Seeding & Domain Expansion** | `populate_graph.py`, `expand_data.py` | Seeds commercial grape varieties (*Chardonnay, Cabernet Sauvignon, Thompson Seedless, Bangalore Blue, Shiraz, Merlot*) and treatments (*Sulfur, Copper Spray, Neem Oil, Mancozeb*). |
 | **9** | **Automated Dataset Extraction Pipeline** | `dataset_prep.py` | Traverses graph entity relationships to compile formatted Question/Answer pairs into instruction-following JSONL datasets (`agri_dataset.jsonl`). |
 | **10** | **4-Bit QLoRA Fine-Tuning Pipeline** | `fine_tune.py` | Full PyTorch, Hugging Face `transformers`, `peft`, and `trl` script utilizing BitsAndBytes 4-bit NormalFloat (NF4) quantization to fine-tune Llama-3-8B. |
+| **11** | **Dynamic Gemini Model Discovery & Selector** | `gemini_manager.py`, `app.py` | Queries `genai.list_models()` in real time to populate the Streamlit sidebar with active models (`gemini-2.5-flash`, `gemini-3.5-flash-lite`, etc.), eliminating hardcoded strings. |
+| **12** | **Fault-Tolerant Continuous Failover Cascade** | `gemini_manager.py`, `agents/workflow.py` | Automatically intercepts 429 (ResourceExhausted), 504 (Timeout), and 404 errors, continuously rotating to the next available working model in a failover loop. |
 
 ---
 
@@ -119,13 +121,20 @@ erDiagram
 Defined in `agents/workflow.py`:
 
 ```python
-class GraphState(TypedDict):
+class GraphState(TypedDict, total=False):
     question: str                  # User's raw text prompt
-    image: any                     # PIL.Image.Image instance (or None)
+    image: Any                     # PIL.Image.Image instance (or None)
     language: str                  # Target language for final synthesis
-    model: any                     # Google GenerativeAI model instance
-    driver: any                    # Neo4j Driver instance
-    collection: any                # ChromaDB Collection instance
+    model: Any                     # Legacy Gemini model reference (backward compatible)
+    driver: Any                    # Neo4j Driver instance
+    collection: Any                # ChromaDB Collection instance
+    
+    # Model Management & Failover Configuration
+    gemini_manager: Any            # GeminiModelManager instance
+    preferred_model: Optional[str] # Primary model chosen from UI (e.g., 'gemini-2.5-flash')
+    auto_fallback: bool            # Whether to shift models on 429 / 504 / 404
+    model_used: str                # Actual model that generated the final response
+    fallback_history: List[dict]   # Telemetry log of attempted models and errors
     
     # Internal Agent Communication Channels
     extracted_entity: str          # Variety or disease extracted by Agent 1
@@ -291,27 +300,86 @@ sequenceDiagram
 
 ---
 
+## 🛡️ Gemini Model Management, Quotas & Continuous Failover
+
+### 1. Why Do API Keys Hit "Full Limit Exceeded" (`429 ResourceExhausted`)?
+In Google AI Studio on the **Free Tier**, quotas are partitioned *per model family*:
+- **Requests Per Minute (RPM) & Requests Per Day (RPD):** Flash models typically provide 15 RPM and 1,500 RPD. Pro preview models (`gemini-3.1-pro-preview`) on the free tier often have a strict daily ceiling of 50 requests or 0 RPD once the preview tier saturates.
+- **Multi-Agent Multiplier:** In this LangGraph architecture, a single user prompt triggers **two distinct LLM calls** (`Extractor Agent` to identify the entity + `Supervisor Agent` to synthesize the agronomist advice). A complex image diagnosis also consumes image tokens, rapidly multiplying usage against free tier limits.
+- **Strict Cooldown Window:** When a model's daily quota is exhausted, Google rejects calls with `429 ResourceExhausted` accompanied by a countdown (e.g. `retry in 17h16m`).
+
+### 2. Is a "Gemini Project Number" Needed?
+- **In Python Code:** **No.** When authenticating via Google AI Studio API keys (`genai.configure(api_key=...)`), Google encodes project association and credentials directly into the API key string. Passing a GCP Project Number or Project ID is only required when using the enterprise Google Cloud **Vertex AI SDK** (`vertexai.init(project=...)`).
+- **In Google Cloud Console:** **Yes, for upgrading quotas.** By opening the Google Cloud project attached to your AI Studio key and linking a Billing Account, you transition from the Free Tier to **Tier 1 (Pay-as-you-go)**. This immediately unlocks up to 1,000–4,000 RPM, removing the 429 lockouts.
+
+### 3. Dynamic Model Discovery vs. Hardcoding
+Previously, models were hardcoded as `'gemini-3.8-flash'`. If Google sunsets a preview model (returning `404 Not Found`), rate-limits it (`429`), or if the experimental endpoint experiences latency (`504 DeadlineExceeded`), the entire chatbot halts.
+
+`gemini_manager.py` resolves this via **Dynamic Model Discovery**:
+- Discovers live models dynamically via `genai.list_models()`.
+- Filters out non-text models (embeddings, TTS, image generation).
+- Automatically populates the Streamlit UI dropdown so farmers or developers can choose any active model.
+
+### 4. Continuous Failover Cascade Loop
+When **Auto-Failover** is enabled (default), the `GeminiModelManager` intercepts failures and shifts sequentially down the cascade without dropping the user's session:
+
+```mermaid
+flowchart LR
+    Start([User Query]) --> M1[Try Selected Model\ne.g. gemini-3.8-flash]
+    M1 -- "429 / 504 / 404" --> M2[Shift to\ngemini-2.5-flash]
+    M2 -- "429 / 504 / 404" --> M3[Shift to\ngemini-3.5-flash-lite]
+    M3 -- "429 / 504 / 404" --> M4[Shift to\ngemini-3.1-flash-lite]
+    M4 -- "429 / 504 / 404" --> M5[Other Discovered Models]
+    M1 -- Success --> Done([Return Diagnostic Output])
+    M2 -- Success --> Done
+    M3 -- Success --> Done
+    M4 -- Success --> Done
+    M5 -- Success --> Done
+```
+
+Telemetry of any shifted models is reported directly in the Streamlit UI under **"See System Reasoning & Model Telemetry"**.
+
+---
+
 ## 🗂️ Project Structure & File Inventory
 
 ```
 agrichatbot/
 ├── app.py                  # 🚀 Main Streamlit application (UI + LangGraph Execution)
+├── gemini_manager.py       # 🧠 Resilient Model Cascade, dynamic discovery & quota failover loop
 ├── requirements.txt        # 📦 Python production dependencies
 ├── .env                    # 🔑 API keys and DB credentials (git-ignored)
 ├── agri_dataset.jsonl      # 🗄️ Automated Q&A dataset generated from Neo4j
 ├── agents/
 │   └── workflow.py         # 🧠 LangGraph StateGraph, Nodes, and Agent definitions
-├── chroma_db/              # 🗄️ Persistent local ChromaDB vector store
-├── data/                   # 📂 9 domain manuals & agricultural reference texts
+├── chroma_db/              # 🗄️ Persistent local ChromaDB vector store (589 embedded chunks)
+├── data/                   # 📂 26 domain manuals & agricultural reference texts
+│   ├── Anthracnose.txt
 │   ├── Black_rot_(grape_disease).txt
 │   ├── Bordeaux_mixture.txt
 │   ├── Botrytis_cinerea.txt
 │   ├── Cabernet_Sauvignon.txt
 │   ├── Chardonnay.txt
+│   ├── Crown_gall.txt
 │   ├── Downy_mildew.txt
+│   ├── Esca_(grape_disease).txt
 │   ├── Fungicide.txt
+│   ├── Grape.txt
+│   ├── Grapevine_fanleaf_virus.txt
+│   ├── Grapevine_leafroll-associated_virus.txt
+│   ├── Irrigation_in_viticulture.txt
+│   ├── Mancozeb.txt
+│   ├── Merlot.txt
 │   ├── Phylloxera.txt
-│   └── Powdery_mildew.txt
+│   ├── Pierces_disease.txt
+│   ├── Powdery_mildew.txt
+│   ├── Rootstock.txt
+│   ├── Sulfur.txt
+│   ├── Sultana_(grape).txt
+│   ├── Syrah.txt
+│   ├── Table_grape.txt
+│   ├── Vine_training.txt
+│   └── Viticulture.txt
 ├── build_knowledge_base.py # 🌐 Wikipedia crawler & automated Cypher injector
 ├── dataset_prep.py         # 🗄️ Automated script to extract Neo4j Graph into JSONL
 ├── expand_data.py          # 🌿 Bulk seeds commercial grape varieties & treatments

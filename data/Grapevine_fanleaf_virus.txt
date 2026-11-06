@@ -1,0 +1,18 @@
+Grapevine fanleaf virus (GFLV) is a plant pathogenic virus of the family Secoviridae. It infects grapevines, causing chlorosis of the leaves and lowering the fruit quality. Because of its effect on grape yield, GFLV is a pathogen of commercial importance. It is transmitted via a nematode vector, Xiphinema index. This nematode acquires the virus through feeding on roots of an infected plant, and passes it on in the same manner.
+
+Host and symptoms
+The hosts for grapevine fanleaf virus or GFLV are plants of the genus Vitis, including V. vinifera, V. rupestris, and wild and domestic hybrids. Symptoms of GFLV infection are “distortion of leaves and may cause unusual chlorotic (yellow) patterns on leaves, such as a yellow mosaic or yellow veins.”(5) Plants infected with GFLV also tend to have a reduced size with softer fruit when compared to fruit from healthy plants. The leaves often become “severely distorted, asymmetrical, cupped and puckered, and exhibit acute dentations”, resembling a fan, hence the name fanleaf virus. The canes may also show signs of abnormal branching, double nodding, and short internodes. Affected vines can also show signs of yellow mosaic, which may affect all parts of the vine. Berries of infected plants have a reduced yield and are smaller, and may also have irregular ripening times.(4)
+
+Disease cycle
+The disease is spread by Xiphinema index, commonly called the dagger nematode. The typical life cycle of Xiphinema index nematode involves six life cycle stages. First, the females lay eggs in the soil. Once the juveniles hatch, they go through a series of four molting stages, growing larger with each molt. The nematode feeds and attacks the plant at all of these stages, using its stylus to feed on the plant. During feeding, the nematode secretes enzymes into the plant to digest plant cells, and can also transfer the virus into the plant in the process. The nematode can also become a carrier of the pathogen at this point if it is not already infected.(6)
+
+Management
+Planting certified disease-free plants will make it so that the nematodes cannot spread the disease unless they already carry the pathogen. GFLV can also be spread by humans during pruning of the plants, so another prevention method involves disinfecting the pruning tools between pruning each plant. Effective management requires routine health checks for all plants and immediately discarding any plants showing signs of disease, and also testing the soil for GFLV before the growing season begins.(7) Applying nematicidal solutions to the crops, deeply plowing the fields, and using nematode-resistant rootstocks may also help to mitigate the risk of GFLV infection.(5)
+
+External links
+ICTVdB—The Universal Virus Database: Grapevine fanleaf virus
+Family Groups—The Baltimore Method Archived 2013-03-30 at the Wayback Machine
+Taxonomy Browser at PDBe
+
+
+== References ==
